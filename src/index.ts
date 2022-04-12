@@ -35,11 +35,9 @@ const summaryLine = (summary: FileResult): string => {
   const errorsText = plural(summary.errorsCount, 'error');
   const warningsText = plural(summary.warningsCount, 'warning');
 
-  return `${
-    summary.errorsCount > 0 ? errorColor(errorsText) : errorsText
-  } and ${
-    summary.warningsCount > 0 ? warningColor(warningsText) : warningsText
-  }`;
+  return `${summary.errorsCount > 0 ? errorColor(errorsText) : errorsText
+    } and ${summary.warningsCount > 0 ? warningColor(warningsText) : warningsText
+    }`;
 };
 
 const reportFile = (file: VFile): FileResult => {
@@ -70,10 +68,10 @@ const reportMessage = (
   const positionLine = contentLines[message.position.start.line - 1]
     ? '\n\n' + getErrorLine(message, contentLines)
     : '';
-  const prefixSymbol = message.warn
+  const prefixSymbol = message.message
     ? warningColor(figures.warning)
     : errorColor(figures.cross);
-  const level = message.warn ? warningColor('warning') : errorColor('error');
+  const level = message.message ? warningColor('warning') : errorColor('error');
 
   const text =
     '  ' +
@@ -87,8 +85,8 @@ const reportMessage = (
 
   return {
     text,
-    errorsCount: message.warn ? 0 : 1,
-    warningsCount: message.warn ? 1 : 0,
+    errorsCount: message.message ? 0 : 1,
+    warningsCount: message.message ? 1 : 0,
   };
 };
 
