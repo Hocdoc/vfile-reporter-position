@@ -1,5 +1,5 @@
 {
-  "version": "0.1.7",
+  "version": "1.0.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -36,10 +36,9 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@types/vfile": "^4.0.0",
     "chalk": "^4.0.0",
     "figures": "^3.2.0",
-    "vfile": "^4.1.0"
+    "vfile": "^5.1.0"
   },
   "repository": {
     "type": "git",

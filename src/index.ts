@@ -66,7 +66,7 @@ const reportMessage = (
   const ruleId = message.ruleId ? sourceColor(message.ruleId) : '';
   const sourceAndRule =
     source && ruleId ? source + chalk.grey(':') + ruleId : source + ruleId;
-  const positionLine = contentLines[message.location.start.line - 1]
+  const positionLine = contentLines[message.position.start.line - 1]
     ? '\n\n' + getErrorLine(message, contentLines)
     : '';
   const prefixSymbol = message.warn
@@ -96,15 +96,15 @@ const getErrorLine = (
   contentLines: string[]
 ): string => {
   const prefix = '  ';
-  const startLineNumber = message.location.start.line;
-  const endLineNumber = message.location.end.line;
-  const startColumn = message.location.start.column;
+  const startLineNumber = message.position.start.line;
+  const endLineNumber = message.position.end.line;
+  const startColumn = message.position.start.column;
   const text = contentLines[startLineNumber - 1];
   const contentLine = lineNumberColor(startLineNumber) + ' ' + text;
   const dummyLineNumber = startLineNumber.toString().replace(/\d/g, ' ');
   const redLineLength =
     startLineNumber === endLineNumber
-      ? message.location.end.column - startColumn
+      ? message.position.end.column - startColumn
       : text.length - startColumn;
   const redLine =
     lineNumberColor(dummyLineNumber) +
@@ -140,12 +140,12 @@ const formatPath = (path: string): string => {
 const formatPathWithPosition = (file: VFile, message: VFileMessage) => {
   let result = file.path ? chalk.cyan(file.path) : '';
   let separator = chalk.grey(':');
-  if (message.location.start.line && message.location.start.column) {
+  if (message.position.start.line && message.position.start.column) {
     if (result.length > 0) result += separator;
     result +=
-      chalk.yellow(message.location.start.line) +
+      chalk.yellow(message.position.start.line) +
       separator +
-      chalk.yellow(message.location.start.column);
+      chalk.yellow(message.position.start.column);
   }
 
   return result;
