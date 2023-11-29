@@ -1,11 +1,11 @@
 /**
  * Prints error messages with position and content
  */
-import { VFile } from 'vfile';
-import { VFileMessage } from 'vfile-message';
+import { parse as pathParse, sep as pathSep } from 'node:path';
+import type { VFile } from 'vfile';
+import type { VFileMessage } from 'vfile-message';
 import chalk from 'chalk';
 import figures from 'figures';
-import { parse as pathParse, sep as pathSep } from 'path';
 
 interface FileResult {
   text: string;
@@ -18,8 +18,8 @@ const reporter = (files: VFile[], options?: object): string =>
 
 const reporterFileResult = (files: VFile[], _options?: object): FileResult => {
   const fileResults = files
-    .filter(x => x.messages.length > 0)
-    .map(x => reportFile(x));
+    .filter((x) => x.messages.length > 0)
+    .map((x) => reportFile(x));
   const summary = mergeResults(fileResults);
 
   return {
@@ -46,7 +46,7 @@ const reportFile = (file: VFile): FileResult => {
   const contentLines = file.toString().split('\n');
 
   const errorMessages = mergeResults(
-    file.messages.map(x => reportMessage(file, x, contentLines))
+    file.messages.map((x) => reportMessage(file, x, contentLines))
   );
   const header = formatPath(file.path || '<stdin>') + '\n';
 
@@ -55,6 +55,18 @@ const reportFile = (file: VFile): FileResult => {
     text: header + errorMessages.text,
   };
 };
+
+const getStartLine = (message: VFileMessage): number =>
+  message.position?.start.line ?? 1;
+
+const getStartColumn = (message: VFileMessage): number =>
+  message.position?.start.column ?? 1;
+
+const getEndLine = (message: VFileMessage): number =>
+  message.position?.end.line ?? getStartLine(message);
+
+const getEndColumn = (message: VFileMessage): number =>
+  message.position?.end.column ?? getStartColumn(message);
 
 const reportMessage = (
   file: VFile,
@@ -66,13 +78,13 @@ const reportMessage = (
   const ruleId = message.ruleId ? sourceColor(message.ruleId) : '';
   const sourceAndRule =
     source && ruleId ? source + chalk.grey(':') + ruleId : source + ruleId;
-  const positionLine = contentLines[message.location.start.line - 1]
+  const positionLine = contentLines[getStartLine(message) - 1]
     ? '\n\n' + getErrorLine(message, contentLines)
     : '';
-  const prefixSymbol = message.warn
-    ? warningColor(figures.warning)
-    : errorColor(figures.cross);
-  const level = message.warn ? warningColor('warning') : errorColor('error');
+  const prefixSymbol = message.fatal
+    ? errorColor(figures.cross)
+    : warningColor(figures.warning);
+  const level = message.fatal ? errorColor('error') : warningColor('warning');
 
   const text =
     '  ' +
@@ -86,8 +98,8 @@ const reportMessage = (
 
   return {
     text,
-    errorsCount: message.warn ? 0 : 1,
-    warningsCount: message.warn ? 1 : 0,
+    errorsCount: message.fatal ? 1 : 0,
+    warningsCount: message.fatal ? 0 : 1,
   };
 };
 
@@ -96,15 +108,15 @@ const getErrorLine = (
   contentLines: string[]
 ): string => {
   const prefix = '  ';
-  const startLineNumber = message.location.start.line;
-  const endLineNumber = message.location.end.line;
-  const startColumn = message.location.start.column;
+  const startLineNumber = getStartLine(message);
+  const endLineNumber = getEndLine(message);
+  const startColumn = getStartColumn(message);
   const text = contentLines[startLineNumber - 1];
   const contentLine = lineNumberColor(startLineNumber) + ' ' + text;
   const dummyLineNumber = startLineNumber.toString().replace(/\d/g, ' ');
   const redLineLength =
     startLineNumber === endLineNumber
-      ? message.location.end.column - startColumn
+      ? getEndColumn(message) - startColumn
       : text.length - startColumn;
   const redLine =
     lineNumberColor(dummyLineNumber) +
@@ -120,7 +132,7 @@ const mergeResults = (results: FileResult[]): FileResult => {
     warningsCount: 0,
   };
 
-  results.forEach(x => {
+  results.forEach((x) => {
     if (summary.text.length > 0) summary.text += '\n';
     summary.text += x.text;
 
@@ -140,12 +152,13 @@ const formatPath = (path: string): string => {
 const formatPathWithPosition = (file: VFile, message: VFileMessage) => {
   let result = file.path ? chalk.cyan(file.path) : '';
   let separator = chalk.grey(':');
-  if (message.location.start.line && message.location.start.column) {
+  const position = message.position;
+  if (position?.start.line && position?.start.column) {
     if (result.length > 0) result += separator;
     result +=
-      chalk.yellow(message.location.start.line) +
+      chalk.yellow(position.start.line) +
       separator +
-      chalk.yellow(message.location.start.column);
+      chalk.yellow(position.start.column);
   }
 
   return result;
@@ -159,4 +172,4 @@ const errorColor = chalk.red;
 const lineNumberColor = (text: any): string => chalk.bgWhite(chalk.black(text));
 const sourceColor = chalk.magenta;
 
-module.exports = reporter;
+export default reporter;

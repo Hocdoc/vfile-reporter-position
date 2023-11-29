@@ -1,7 +1,8 @@
-import vfile from 'vfile';
-const reporter = require('../src');
+import * as assert from 'assert';
+import { VFile } from 'vfile';
+import reporter from '../dist/index.js';
 
-const file1 = vfile({
+const file1 = new VFile({
   path: 'src/test.md',
   contents: 'hurrra braavo Jawa!',
 });
@@ -15,9 +16,9 @@ const warning = file1.message(
   { start: { line: 1, column: 16 }, end: { line: 1, column: 20 } },
   'spell:warn'
 );
-warning.warn = true;
+warning.fatal = false;
 
-const file2 = vfile({
+const file2 = new VFile({
   path: 'src/other/dir/test.md',
   contents: 'Hallo world!',
 });
@@ -28,4 +29,14 @@ file2.message(
 );
 
 const result = reporter([file1, file2]);
-console.log(result);
+assert.strictEqual(
+  result,
+  `\
+src/test.md
+  ⚠ src/test.md:1:8 - warning spell:typo \`braavo\` is misspelt; did you mean \`bravo\`?
+  ⚠ src/test.md:1:16 - warning spell:warn \`Jawa\` is maybe misspelt; did you mean \`Java\`?
+src/other/dir/test.md
+  ⚠ src/other/dir/test.md:1:1 - warning spell:typo \`Hallo\` is misspelt; did you mean \`Hello\`?
+
+0 errors and 3 warnings`
+);
